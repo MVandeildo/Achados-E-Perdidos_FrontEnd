@@ -37,7 +37,7 @@ function Login() {
 function NavBar() {
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-primary px-3">
-      <Link className="navbar-brand" to="/home">Achados e Perdidos</Link>
+      <Link className="navbar-brand" to="/">Achados e Perdidos</Link>
       <div className="navbar-nav gap-3">
         <Link className="nav-link" to="/home">Início</Link>
         <Link className="nav-link" to="/cadastro-item">Cadastrar Item</Link>
