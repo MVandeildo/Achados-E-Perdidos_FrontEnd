@@ -28,6 +28,7 @@ function Login() {
         <input type="password" className="form-control mb-3" placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
 
         <Link to="/home" className="btn btn-primary w-100">Entrar</Link>
+        <Link to="/cadastro-usuario" className='btn btn-primary w-100'>Registrar-se</Link>
       </div>
     </div>
   );
@@ -40,7 +41,6 @@ function NavBar() {
       <div className="navbar-nav gap-3">
         <Link className="nav-link" to="/home">Início</Link>
         <Link className="nav-link" to="/cadastro-item">Cadastrar Item</Link>
-        <Link className="nav-link" to="/cadastro-usuario">Cadastrar Usuário</Link>
       </div>
     </nav>
   );
