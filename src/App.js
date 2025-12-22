@@ -6,12 +6,14 @@ import {
   X, Loader2, AlertCircle, Camera, Image as ImageIcon,
   Search, Filter, ChevronRight
 } from 'lucide-react';
+import { cadastrarItem } from './services/itemService';
+
 
 /**
  * CONFIGURAÇÃO DA API
  * Centralizada para fácil manutenção
  */
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:8080/api';
 const api = axios.create({ baseURL: API_BASE_URL });
 
 api.interceptors.request.use(config => {
@@ -89,6 +91,8 @@ export default function App() {
   const [notif, setNotif] = useState(null);
   const [selectedMapItem, setSelectedMapItem] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
+  const [itens, setItens] = useState([]); // Evita que 'itens' seja undefined
+  const [busca, setBusca] = useState(""); // Evita que 'busca' seja undefined
 
   const notify = (msg, type = 'success') => {
     setNotif({ msg, type });
@@ -96,16 +100,16 @@ export default function App() {
   };
 
   const loadItems = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get('/items');
-      setItems(res.data || []);
-    } catch (err) {
-      notify('Falha ao sincronizar dados com o servidor.', 'danger');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  setLoading(true);
+  try {
+    const res = await api.get('/itens');
+    setItems(res.data || []); 
+  } catch (err) {
+    notify('Falha ao sincronizar dados com o servidor.', 'danger');
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     const saved = localStorage.getItem('user_data');
@@ -144,14 +148,11 @@ export default function App() {
     const fd = new FormData(e.target);
     const lat = parseFloat(fd.get('lat'));
     
-    if (!lat) return notify('Selecione o local no mapa para continuar.', 'warning');
 
     const data = {
-      name: fd.get('name'),
-      description: fd.get('description'),
+      titulo: fd.get('titulo'),
+      descricao: fd.get('descricao'),
       status: fd.get('status'),
-      latitude: lat,
-      longitude: parseFloat(fd.get('lng')),
       userName: user.name,
       image: imagePreview
     };
@@ -178,11 +179,15 @@ export default function App() {
   };
 
   // Filtros de interface
-  const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'Todos' || item.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const itensFiltrados = items.filter(item => {
+  // Filtro por texto (título)
+  const matchesSearch = item.titulo?.toLowerCase().includes(searchTerm.toLowerCase());
+  
+  // Filtro por Status (Todos, Perdido ou Encontrado)
+  const matchesStatus = filterStatus === 'Todos' || item.status === filterStatus;
+  
+  return matchesSearch && matchesStatus;
+});
 
   // --- TELA DE ACESSO ---
   if (!user) return (
@@ -288,13 +293,13 @@ export default function App() {
                 </div>
               ) : (
                 <div className="row g-4">
-                  {filteredItems.map(item => (
+                  {itensFiltrados.map(item => (
                     <div key={item.id} className="col-xl-6">
                       <div className="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
                         <div className="row g-0 h-100">
                           <div className="col-sm-4 bg-white position-relative" style={{ minHeight: '160px' }}>
-                            {item.image ? (
-                              <img src={item.image} alt={item.name} className="w-100 h-100 object-fit-cover" />
+                            {item.imagem ? (
+                              <img src={item.imagem} alt={item.titulo} className="w-100 h-100 object-fit-cover" />
                             ) : (
                               <div className="w-100 h-100 d-flex align-items-center justify-content-center text-light bg-light">
                                 <ImageIcon size={48} />
@@ -306,8 +311,8 @@ export default function App() {
                           </div>
                           <div className="col-sm-8 d-flex flex-column">
                             <div className="card-body p-4">
-                              <h5 className="fw-bold mb-2">{item.name}</h5>
-                              <p className="text-secondary small mb-3 text-truncate-2">{item.description}</p>
+                              <h5 className="fw-bold mb-2">{item.titulo}</h5>
+                              <p className="text-secondary small mb-3 text-truncate-2">{item.descricao}</p>
                               
                               <div className="d-flex flex-wrap gap-3 align-items-center mt-auto border-top pt-3">
                                 <div className="small text-muted d-flex align-items-center gap-1">
@@ -337,7 +342,7 @@ export default function App() {
                     </div>
                   ))}
                   
-                  {filteredItems.length === 0 && (
+                  {itensFiltrados.length === 0 && (
                     <div className="col-12 text-center py-5">
                       <div className="bg-white rounded-4 shadow-sm p-5 border-2 border-dashed">
                         <ClipboardList size={48} className="text-muted mb-3 opacity-25" />
@@ -392,27 +397,17 @@ export default function App() {
 
                       <div className="col-12">
                         <label className="form-label fw-bold small text-muted text-uppercase">O que é?</label>
-                        <input name="name" className="form-control py-3" placeholder="Ex: Chaves, iPhone 13, Mochila Preta..." required />
+                        <input name="titulo" className="form-control py-3" placeholder="Ex: Chaves, iPhone 13, Mochila Preta..." required />
                       </div>
 
                       <div className="col-12">
                         <label className="form-label fw-bold small text-muted text-uppercase">Descrição/Detalhes</label>
-                        <textarea name="description" className="form-control py-3" rows="3" placeholder="Onde foi visto? Tem algum adesivo ou marca?" required></textarea>
-                      </div>
-
-                      <div className="col-12">
-                        <label className="form-label fw-bold small text-muted text-uppercase">Localização no Campus</label>
-                        <InteractiveMap onLocationSelect={(c) => {
-                          document.getElementById('lat').value = c.lat;
-                          document.getElementById('lng').value = c.lng;
-                        }} />
-                        <input type="hidden" name="lat" id="lat" />
-                        <input type="hidden" name="lng" id="lng" />
+                        <textarea name="descricao" className="form-control py-3" rows="3" placeholder="Onde foi visto? Tem algum adesivo ou marca?" required></textarea>
                       </div>
 
                       <div className="col-12 pt-2">
                         <button type="submit" className="btn btn-primary btn-lg w-100 py-3 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2">
-                          <PlusCircle size={20} /> PUBLICAR REGISTO
+                          <PlusCircle size={20} /> PUBLICAR REGISTRO
                         </button>
                       </div>
                     </form>
