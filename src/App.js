@@ -6,7 +6,6 @@ import {
   X, Loader2, AlertCircle, Camera, Image as ImageIcon,
   Search, Filter, ChevronRight
 } from 'lucide-react';
-import { cadastrarItem } from './services/itemService';
 
 
 /**
@@ -164,14 +163,14 @@ export default function App() {
       setPage('dashboard');
       loadItems();
     } catch (err) {
-      notify('Erro ao processar o registo.', 'danger');
+      notify('Erro ao processar o registro.', 'danger');
     }
   };
 
   const deleteItem = async (id) => {
     try {
       await api.delete(`/itens/${id}`);
-      notify('Registo removido.');
+      notify('Registro removido.');
       loadItems();
     } catch (err) {
       notify('Erro ao eliminar item.', 'danger');
@@ -331,7 +330,7 @@ export default function App() {
                                 <MessageCircle size={16} className="me-2" /> Contactar
                               </button>
                               {user.role === 'admin' && (
-                                <button onClick={() => deleteItem(item.id)} className="btn btn-light text-danger px-3 py-2 rounded-3">
+                                <button onClick={() => deleteItem(item.idItem)} className="btn btn-light text-danger px-3 py-2 rounded-3">
                                   <Trash2 size={16} />
                                 </button>
                               )}
